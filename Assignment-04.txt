@@ -1,0 +1,132 @@
+TALHA HAFiz
+BSE233135
+Assignment no 04 
+Sir Adnan jellani 
+
+Question: Program
+#include <iostream>
+#include <string>
+#include <vector>
+#include <ctime>
+using namespace std;
+class Item {
+protected:
+    int itemID;
+    string title;
+    bool availability;
+public:
+    Item(int id, string t, bool avail) : itemID(id), title(t), availability(avail) {}
+    virtual void getItemDetails() = 0;
+    virtual bool checkAvailability() {
+        return availability;
+    }
+    virtual void checkOut() {
+        availability = false;
+    }
+    virtual void checkIn() {
+        availability = true;
+    }
+    string getTitle() const { return title; }  
+};
+class Book : public Item {
+    string author;
+    string ISBN;
+public:
+    Book(int id, string t, bool avail, string a, string isbn) 
+        : Item(id, t, avail), author(a), ISBN(isbn) {}
+
+    void getItemDetails() override {
+        cout << "Book ID: " << itemID << "\nTitle: " << title 
+             << "\nAuthor: " << author << "\nISBN: " << ISBN 
+             << "\nAvailable: " << (availability ? "Yes" : "No") << endl;
+    }
+};
+class Journal : public Item {
+    string publisher;
+    int issueNumber;
+public:
+    Journal(int id, string t, bool avail, string pub, int issue) 
+        : Item(id, t, avail), publisher(pub), issueNumber(issue) {}
+
+    void getItemDetails() override {
+        cout << "Journal ID: " << itemID << "\nTitle: " << title 
+             << "\nPublisher: " << publisher << "\nIssue Number: " << issueNumber 
+             << "\nAvailable: " << (availability ? "Yes" : "No") << endl;
+    }
+};
+class Member {
+    int memberID;
+    string name;
+    string contactInfo;
+    int loanLimit;
+    vector<Item*> loanHistory;
+public:
+    Member(int id, string n, string contact, int limit) 
+        : memberID(id), name(n), contactInfo(contact), loanLimit(limit) {}
+    void borrowItem(Item* item) {
+        if (item->checkAvailability() && loanHistory.size() < loanLimit) {
+            item->checkOut();
+            loanHistory.push_back(item);
+            cout << name << " borrowed " << item->getTitle() << endl;
+        } else {
+            cout << "Cannot borrow item. Either it's unavailable or loan limit reached." << endl;
+        }
+    }
+    void returnItem(Item* item) {
+        for (size_t i = 0; i < loanHistory.size(); i++) {
+            if (loanHistory[i] == item) {
+                item->checkIn();
+                loanHistory.erase(loanHistory.begin() + i);
+                cout << name << " returned " << item->getTitle() << endl;
+                return;
+            }
+        }
+        cout << "Item not found in loan history." << endl;
+    }
+
+    void getLoanHistory() {
+        cout << name << "'s Loan History:" << endl;
+        for (Item* item : loanHistory) {
+            item->getItemDetails();
+        }
+    }
+};
+class Loan {
+    int loanID;
+    Item* item;
+    Member* member;
+    time_t dueDate;
+    time_t returnDate;
+public:
+    Loan(int id, Item* it, Member* mem, time_t due) 
+        : loanID(id), item(it), member(mem), dueDate(due), returnDate(0) {}
+
+    void returnLoan() {
+        returnDate = time(0);
+        item->checkIn();
+    }
+
+    double calculateFine() {
+        if (returnDate > dueDate) {
+            double daysLate = difftime(returnDate, dueDate) / (60 * 60 * 24);
+            return daysLate * 1.0;  
+        }
+        return 0.0;
+    }
+};
+int main() {
+    Book book1(1, "The Great Gatsby", true, "F. Scott Fitzgerald", "123456789");
+    Journal journal1(2, "Nature", true, "Nature Publishing", 123);
+    Member member1(1, "John Doe", "johndoe@example.com", 5);
+    member1.borrowItem(&book1);
+    member1.getLoanHistory();
+    member1.returnItem(&book1);
+    member1.getLoanHistory();
+    time_t now = time(0);
+    Loan loan1(1, &book1, &member1, now + 5 * 24 * 60 * 60);  
+    loan1.returnLoan();
+    cout << "Fine: $" << loan1.calculateFine() << endl;
+    
+    return 0;
+}
+ 
